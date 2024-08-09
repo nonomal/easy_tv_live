@@ -4,26 +4,37 @@ import 'package:easy_tv_live/subscribe/subScribe_model.dart';
 import 'package:easy_tv_live/util/date_util.dart';
 import 'package:easy_tv_live/util/env_util.dart';
 import 'package:easy_tv_live/util/http_util.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:sp_util/sp_util.dart';
+
+import 'log_util.dart';
 
 class M3uUtil {
   M3uUtil._();
   // 获取默认的m3u文件
-  static Future<Map<String, dynamic>> getDefaultM3uData(Function(String sourceName) sourceNameCallback) async {
+  static Future<Map<String, dynamic>> getDefaultM3uData() async {
     String m3uData = '';
     final models = await getLocalData();
-    if (models.isEmpty) {
-      m3uData = await _fetchData();
-      await saveLocalData(
-          [SubScribeModel(time: DateUtil.formatDate(DateTime.now(), format: DateFormats.full), link: 'default', result: m3uData, selected: true)]);
-      sourceNameCallback('默认数据源');
+    if (models.isNotEmpty) {
+      final defaultModel = models.firstWhere((element) => element.selected == true, orElse: () => models.first);
+      final newRes = await HttpUtil().getRequest(defaultModel.link == 'default' ? EnvUtil.videoDefaultChannelHost() : defaultModel.link!);
+      if (newRes != null) {
+        LogUtil.v('已获取新数据::::::');
+        m3uData = newRes;
+        await SpUtil.putString('m3u_cache', m3uData);
+      } else {
+        final oldRes = SpUtil.getString('m3u_cache', defValue: '');
+        if (oldRes != '') {
+          LogUtil.v('已获取到历史保存的数据::::::');
+          m3uData = oldRes!;
+        }
+      }
+      if (m3uData.isEmpty) {
+        return <String, dynamic>{};
+      }
     } else {
-      // LogUtil.v('models===${models.map((e) => e.toJson())}');
-      final subScribeModel = models.firstWhere((element) => element.selected == true, orElse: () => models.first);
-      m3uData = subScribeModel.result!;
-      sourceNameCallback(subScribeModel.link?.split('/').last ?? '默认数据源');
+      m3uData = await _fetchData();
+      await saveLocalData([SubScribeModel(time: DateUtil.formatDate(DateTime.now(), format: DateFormats.full), link: 'default', selected: true)]);
     }
     return _parseM3u(m3uData);
   }
@@ -54,16 +65,12 @@ class M3uUtil {
     }
   }
 
-  // 刷新m3u文件
-  static Future<String> refreshM3uLink(String link, {bool isAdd = false}) async {
-    debugPrint('refreshM3uLink=======$link');
-    final res = await HttpUtil().getRequest(link);
-    if (res == null) {
-      EasyLoading.showToast('请刷新重试');
-      return '';
-    } else {
-      return res;
+  static bool isLiveLink(String link) {
+    final tLink = link.toLowerCase();
+    if (tLink.startsWith('http') || tLink.startsWith('r') || tLink.startsWith('p') || tLink.startsWith('s') || tLink.startsWith('w')) {
+      return true;
     }
+    return false;
   }
 
   // 解析m3u文件为Map
@@ -71,6 +78,8 @@ class M3uUtil {
     final lines = m3u.split('\n');
     final result = <String, dynamic>{};
     if (m3u.startsWith('#EXTM3U')) {
+      String tempGroupTitle = '';
+      String tempChannelName = '';
       for (int i = 0; i < lines.length - 1; i++) {
         final line = lines[i];
         if (line.startsWith('#EXTINF:')) {
@@ -78,23 +87,29 @@ class M3uUtil {
           List<String> params = lineList.first.replaceAll('"', '').split(' ');
           final groupStr = params.firstWhere((element) => element.startsWith('group-title='), orElse: () => 'group-title=默认');
           if (groupStr.isNotEmpty) {
-            final groupTitle = groupStr.split('=').last;
-            final channelName = lineList.last;
-            Map group = result[groupTitle] ?? {};
-            List groupList = group[channelName] ?? [];
+            tempGroupTitle = groupStr.split('=').last;
+            tempChannelName = lineList.last;
+            Map group = result[tempGroupTitle] ?? {};
+            List groupList = group[tempChannelName] ?? [];
             final lineNext = lines[i + 1];
-            if (lineNext.startsWith('http') || lineNext.startsWith('rt')) {
+            if (isLiveLink(lineNext)) {
               groupList.add(lineNext);
-              group[channelName] = groupList;
-              result[groupTitle] = group;
+              group[tempChannelName] = groupList;
+              result[tempGroupTitle] = group;
               i += 1;
-            } else if (lines[i + 2].startsWith('http')) {
+            } else if (isLiveLink(lines[i + 2])) {
               groupList.add(lines[i + 2].toString());
-              group[channelName] = groupList;
-              result[groupTitle] = group;
+              group[tempChannelName] = groupList;
+              result[tempGroupTitle] = group;
               i += 2;
             }
           }
+        } else if (isLiveLink(line)) {
+          Map group = result[tempGroupTitle] ?? {};
+          List groupList = group[tempChannelName] ?? [];
+          groupList.add(line);
+          group[tempChannelName] = groupList;
+          result[tempGroupTitle] = group;
         }
       }
     } else {
@@ -105,7 +120,7 @@ class M3uUtil {
         if (lineList.length >= 2) {
           final groupTitle = lineList[0];
           final channelLink = lineList[1];
-          if (channelLink.startsWith('http') || channelLink.startsWith('rt')) {
+          if (isLiveLink(channelLink)) {
             Map<String, List<String>> group = result[tempGroup] ?? <String, List<String>>{};
             List<String> chanelList = group[groupTitle] ?? <String>[];
             chanelList.add(channelLink);

@@ -1,7 +1,6 @@
-import 'package:easy_tv_live/channel_drawer_page.dart';
-import 'package:easy_tv_live/setting_page.dart';
+import 'package:easy_tv_live/empty_page.dart';
+import 'package:easy_tv_live/router_keys.dart';
 import 'package:easy_tv_live/table_video_widget.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -22,8 +21,10 @@ class MobileVideoWidget extends StatefulWidget {
     required this.isBuffering,
     required this.isPlaying,
     required this.aspectRatio,
+    // 数据源改变
     required this.onChangeSubSource,
     this.toastString,
+    // 线路切换
     this.changeChannelSources,
     this.isLandscape = true,
   }) : super(key: key);
@@ -34,11 +35,6 @@ class MobileVideoWidget extends StatefulWidget {
 
 class _MobileVideoWidgetState extends State<MobileVideoWidget> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -46,15 +42,10 @@ class _MobileVideoWidgetState extends State<MobileVideoWidget> {
         centerTitle: true,
         title: const Text('极简TV'),
         leading: IconButton(
-            onPressed: () {
+            onPressed: () async {
               widget.controller?.pause();
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (context) {
-                    return const SettingPage();
-                  },
-                ),
-              );
+              await Navigator.of(context).pushNamed(RouterKeys.setting);
+              widget.controller?.play();
             },
             icon: Image.asset(
               'assets/images/github.png',
@@ -65,13 +56,11 @@ class _MobileVideoWidgetState extends State<MobileVideoWidget> {
               onPressed: () async {
                 final isPlaying = widget.controller?.value.isPlaying ?? false;
                 if (isPlaying) {
-                  widget.controller!.pause();
+                  widget.controller?.pause();
                 }
-                final res = await Navigator.of(context).pushNamed('subScribe');
-                widget.controller!.play();
+                final res = await Navigator.of(context).pushNamed(RouterKeys.subScribe);
+                widget.controller?.play();
                 if (res == true) {
-                  lastTimeOffset = 0;
-                  lastTimeChannelOffset = 0;
                   widget.onChangeSubSource();
                 }
               },
@@ -91,7 +80,7 @@ class _MobileVideoWidgetState extends State<MobileVideoWidget> {
               isPlaying: widget.isPlaying,
             ),
           ),
-          Flexible(child: widget.drawChild)
+          Flexible(child: widget.toastString == 'UNKNOWN' ? EmptyPage(onRefresh: widget.onChangeSubSource) : widget.drawChild)
         ],
       ),
     );
