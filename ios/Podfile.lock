@@ -2,6 +2,11 @@ PODS:
   - Flutter (1.0.0)
   - flutter_volume_controller (0.0.1):
     - Flutter
+  - fvp (0.23.0):
+    - Flutter
+    - FlutterMacOS
+    - mdk (~> 0.29.1)
+  - mdk (0.29.1)
   - package_info_plus (0.4.5):
     - Flutter
   - screen_brightness_ios (0.1.0):
@@ -20,6 +25,7 @@ PODS:
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_volume_controller (from `.symlinks/plugins/flutter_volume_controller/ios`)
+  - fvp (from `.symlinks/plugins/fvp/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - screen_brightness_ios (from `.symlinks/plugins/screen_brightness_ios/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -27,11 +33,17 @@ DEPENDENCIES:
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
   - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
 
+SPEC REPOS:
+  trunk:
+    - mdk
+
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
   flutter_volume_controller:
     :path: ".symlinks/plugins/flutter_volume_controller/ios"
+  fvp:
+    :path: ".symlinks/plugins/fvp/darwin"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   screen_brightness_ios:
@@ -48,6 +60,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_volume_controller: e4d5832f08008180f76e30faf671ffd5a425e529
+  fvp: 20b3547802db3c25bd3d653436b00e9504d60175
+  mdk: 3c49affb38303cf86fd9f8ea1e05fe029c4dc194
   package_info_plus: 58f0028419748fad15bf008b270aaa8e54380b1c
   screen_brightness_ios: 7437207a2a9bc56553aa10f782afecf830b4c4e2
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78

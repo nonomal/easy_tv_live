@@ -279,4 +279,28 @@ class DateUtil {
   static bool isLeapYearByYear(int year) {
     return year % 4 == 0 && year % 100 != 0 || year % 400 == 0;
   }
+
+  static DateTime parseCustomDateTimeString(String dateTimeString) {
+    // 分离日期时间和时区
+    final parts = dateTimeString.split(' ');
+    final dateTimePart = parts[0];
+    final timeZonePart = parts[1];
+
+    // 解析年月日时分秒
+    final year = int.parse(dateTimePart.substring(0, 4));
+    final month = int.parse(dateTimePart.substring(4, 6));
+    final day = int.parse(dateTimePart.substring(6, 8));
+    final hour = int.parse(dateTimePart.substring(8, 10));
+    final minute = int.parse(dateTimePart.substring(10, 12));
+    final second = int.parse(dateTimePart.substring(12, 14));
+
+    // 解析时区偏移
+    // final timeZoneOffset = Duration(
+    //   hours: int.parse(timeZonePart.substring(1, 3)),
+    //   minutes: int.parse(timeZonePart.substring(3, 5)),
+    // );
+
+    // 创建 DateTime 对象
+    return DateTime(year, month, day, hour, minute, second);
+  }
 }

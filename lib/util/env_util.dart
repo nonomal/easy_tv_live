@@ -1,13 +1,22 @@
+import 'dart:io';
 import 'dart:ui';
 
 class EnvUtil {
+  static bool? _isMobile;
+
   static bool isTV() {
     return const bool.fromEnvironment('isTV');
   }
 
+  static bool get isMobile {
+    if (_isMobile != null) return _isMobile!;
+    _isMobile = Platform.isAndroid || Platform.isIOS;
+    return _isMobile!;
+  }
+
   static bool isChinese() {
     final systemLocale = PlatformDispatcher.instance.locale;
-    bool isChinese = systemLocale.languageCode == 'zh' || systemLocale.languageCode == 'zh_CN';
+    bool isChinese = systemLocale.languageCode == 'zh';
     return isChinese;
   }
 
@@ -48,6 +57,30 @@ class EnvUtil {
       return 'https://gitee.com/api/v5/repos/AMuMuSir/easy_tv_live/releases/latest';
     } else {
       return 'https://api.github.com/repos/aiyakuaile/easy_tv_live/releases/latest';
+    }
+  }
+
+  static String fontLink() {
+    if (isChinese()) {
+      return 'https://gitee.com/AMuMuSir/easy_tv_font/raw/main';
+    } else {
+      return 'https://raw.githubusercontent.com/aiyakuaile/easy_tv_font/main';
+    }
+  }
+
+  static String fontDownloadLink() {
+    if (isChinese()) {
+      return 'https://gitee.com/AMuMuSir/easy_tv_font/releases/download/fonts';
+    } else {
+      return 'https://raw.githubusercontent.com/aiyakuaile/easy_tv_font/main';
+    }
+  }
+
+  static String rewardLink() {
+    if (isChinese()) {
+      return 'https://gitee.com/AMuMuSir/easy_tv_live/raw/main/reward.txt';
+    } else {
+      return 'https://raw.githubusercontent.com/aiyakuaile/easy_tv_live/main/reward.txt';
     }
   }
 }
